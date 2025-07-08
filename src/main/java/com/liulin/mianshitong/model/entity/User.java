@@ -65,6 +65,7 @@ public class User implements Serializable {
      */
     private String userRole;
 
+    private Date editTime;
     /**
      * 创建时间
      */
