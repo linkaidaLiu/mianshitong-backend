@@ -7,42 +7,32 @@ import java.util.Date;
 import lombok.Data;
 
 /**
- * 题库
- * @TableName question_bank
+ * 题库题目
+ * @TableName question_bank_question
  */
-@TableName(value ="question_bank")
+@TableName(value ="question_bank_question")
 @Data
-public class QuestionBank {
+public class Questionbankquestion {
     /**
      * id
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
-     * 标题
+     * 题库 id
      */
-    private String title;
+    private Long questionBankId;
 
     /**
-     * 描述
+     * 题目 id
      */
-    private String description;
-
-    /**
-     * 图片
-     */
-    private String picture;
+    private Long questionId;
 
     /**
      * 创建用户 id
      */
     private Long userId;
-
-    /**
-     * 编辑时间
-     */
-    private Date editTime;
 
     /**
      * 创建时间
@@ -53,9 +43,4 @@ public class QuestionBank {
      * 更新时间
      */
     private Date updateTime;
-
-    /**
-     * 是否删除
-     */
-    private Integer isDelete;
 }

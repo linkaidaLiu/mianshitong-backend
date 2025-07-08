@@ -2,37 +2,48 @@ package com.liulin.mianshitong.model.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.util.Date;
 import lombok.Data;
 
 /**
- * 题库题目
- * @TableName question_bank_question
+ * 题库
+ * @TableName question_bank
  */
-@TableName(value ="question_bank_question")
+@TableName(value ="question_bank")
 @Data
-public class QuestionBankQuestion {
+public class Questionbank {
     /**
      * id
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
-     * 题库 id
+     * 标题
      */
-    private Long questionBankId;
+    private String title;
 
     /**
-     * 题目 id
+     * 描述
      */
-    private Long questionId;
+    private String description;
+
+    /**
+     * 图片
+     */
+    private String picture;
 
     /**
      * 创建用户 id
      */
     private Long userId;
+
+    /**
+     * 编辑时间
+     */
+    private Date editTime;
 
     /**
      * 创建时间
@@ -43,4 +54,10 @@ public class QuestionBankQuestion {
      * 更新时间
      */
     private Date updateTime;
+
+    /**
+     * 是否删除
+     */
+    @TableLogic
+    private Integer isDelete;
 }
