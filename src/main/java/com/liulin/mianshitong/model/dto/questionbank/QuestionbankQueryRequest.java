@@ -28,6 +28,11 @@ public class QuestionbankQueryRequest extends PageRequest implements Serializabl
     private Long notId;
 
     /**
+     * 搜索词
+     */
+    private String searchText;
+
+    /**
      * 标题
      */
     private String title;
@@ -45,6 +50,11 @@ public class QuestionbankQueryRequest extends PageRequest implements Serializabl
      * 创建用户 id
      */
     private Long userId;
+
+    /**
+     * 是否需要关联查询题目列表
+     */
+    private boolean needQueryQuestionList;
 
     private static final long serialVersionUID = 1L;
 }

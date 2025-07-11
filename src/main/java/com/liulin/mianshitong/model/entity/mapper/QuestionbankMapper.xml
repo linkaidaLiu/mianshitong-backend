@@ -2,7 +2,7 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.liulin.mianshitong.mapper.QuestionBankMapper">
+<mapper namespace="com.liulin.mianshitong.mapper.QuestionbankMapper">
 
     <resultMap id="BaseResultMap" type="com.liulin.mianshitong.model.entity.Questionbank">
             <id property="id" column="id" />

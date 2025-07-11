@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2025-07-08 17:00:22
 * @Entity generator.domain.QuestionBank
 */
-public interface QuestionBankMapper extends BaseMapper<Questionbank> {
+public interface QuestionbankMapper extends BaseMapper<Questionbank> {
 
 }
 
