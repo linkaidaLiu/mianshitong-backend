@@ -1,10 +1,6 @@
 package com.liulin.mianshitong.controller;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liulin.mianshitong.annotation.AuthCheck;
 import com.liulin.mianshitong.common.BaseResponse;
@@ -14,16 +10,12 @@ import com.liulin.mianshitong.common.ResultUtils;
 import com.liulin.mianshitong.constant.UserConstant;
 import com.liulin.mianshitong.exception.BusinessException;
 import com.liulin.mianshitong.exception.ThrowUtils;
-import com.liulin.mianshitong.model.dto.question.QuestionAddRequest;
-import com.liulin.mianshitong.model.dto.question.QuestionEditRequest;
-import com.liulin.mianshitong.model.dto.question.QuestionQueryRequest;
-import com.liulin.mianshitong.model.dto.question.QuestionUpdateRequest;
+import com.liulin.mianshitong.model.dto.question.*;
 import com.liulin.mianshitong.model.entity.Question;
-import com.liulin.mianshitong.model.entity.Questionbankquestion;
 import com.liulin.mianshitong.model.entity.User;
 import com.liulin.mianshitong.model.vo.QuestionVO;
 import com.liulin.mianshitong.service.QuestionService;
-import com.liulin.mianshitong.service.QuestionbankquestionService;
+import com.liulin.mianshitong.service.QuestionBankQuestionService;
 import com.liulin.mianshitong.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -48,7 +40,7 @@ public class QuestionController {
     private QuestionService questionService;
 
     @Resource
-    private QuestionbankquestionService questionbankquestionService;
+    private QuestionBankQuestionService questionbankquestionService;
     @Resource
     private UserService userService;
 
@@ -246,6 +238,25 @@ public class QuestionController {
         // 操作数据库
         boolean result = questionService.updateById(question);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        return ResultUtils.success(true);
+    }
+
+    @PostMapping("/search/page/vo")
+    public BaseResponse<Page<QuestionVO>> searchQuestionVOByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
+                                                                 HttpServletRequest request) {
+        long size = questionQueryRequest.getPageSize();
+        // 限制爬虫
+        ThrowUtils.throwIf(size > 200, ErrorCode.PARAMS_ERROR);
+        Page<Question> questionPage = questionService.searchFromEs(questionQueryRequest);
+        return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
+    }
+
+    @PostMapping("/delete/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> batchDeleteQuestions(@RequestBody QuestionBatchDeleteRequest questionBatchDeleteRequest,
+                                                      HttpServletRequest request) {
+        ThrowUtils.throwIf(questionBatchDeleteRequest == null, ErrorCode.PARAMS_ERROR);
+        questionService.batchDeleteQuestions(questionBatchDeleteRequest.getQuestionIdList());
         return ResultUtils.success(true);
     }
 

@@ -1,6 +1,6 @@
 package com.liulin.mianshitong.mapper;
 
-import com.liulin.mianshitong.model.entity.Questionbankquestion;
+import com.liulin.mianshitong.model.entity.QuestionBankQuestion;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
@@ -9,7 +9,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2025-07-08 17:00:22
 * @Entity generator.domain.QuestionBankQuestion
 */
-public interface QuestionBankQuestionMapper extends BaseMapper<Questionbankquestion> {
+public interface QuestionBankQuestionMapper extends BaseMapper<QuestionBankQuestion> {
 
 }
 
