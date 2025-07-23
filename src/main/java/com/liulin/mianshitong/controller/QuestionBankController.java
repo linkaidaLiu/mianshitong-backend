@@ -1,5 +1,8 @@
 package com.liulin.mianshitong.controller;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeException;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.jd.platform.hotkey.client.callback.JdHotKeyStore;
 import com.liulin.mianshitong.annotation.AuthCheck;
@@ -11,10 +14,10 @@ import com.liulin.mianshitong.constant.UserConstant;
 import com.liulin.mianshitong.exception.BusinessException;
 import com.liulin.mianshitong.exception.ThrowUtils;
 import com.liulin.mianshitong.model.dto.question.QuestionQueryRequest;
-import com.liulin.mianshitong.model.dto.questionbank.QuestionbankAddRequest;
-import com.liulin.mianshitong.model.dto.questionbank.QuestionbankEditRequest;
-import com.liulin.mianshitong.model.dto.questionbank.QuestionbankQueryRequest;
-import com.liulin.mianshitong.model.dto.questionbank.QuestionbankUpdateRequest;
+import com.liulin.mianshitong.model.dto.questionbank.QuestionBankAddRequest;
+import com.liulin.mianshitong.model.dto.questionbank.QuestionBankEditRequest;
+import com.liulin.mianshitong.model.dto.questionbank.QuestionBankQueryRequest;
+import com.liulin.mianshitong.model.dto.questionbank.QuestionBankUpdateRequest;
 import com.liulin.mianshitong.model.entity.Question;
 import com.liulin.mianshitong.model.entity.QuestionBank;
 import com.liulin.mianshitong.model.entity.User;
@@ -60,7 +63,7 @@ public class QuestionBankController {
      */
     @PostMapping("/add")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Long> addQuestionbank(@RequestBody QuestionbankAddRequest questionbankAddRequest, HttpServletRequest request) {
+    public BaseResponse<Long> addQuestionbank(@RequestBody QuestionBankAddRequest questionbankAddRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(questionbankAddRequest == null, ErrorCode.PARAMS_ERROR);
         // todo 在此处将实体类和 DTO 进行转换
         QuestionBank questionbank = new QuestionBank();
@@ -114,7 +117,7 @@ public class QuestionBankController {
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> updateQuestionbank(@RequestBody QuestionbankUpdateRequest questionbankUpdateRequest) {
+    public BaseResponse<Boolean> updateQuestionbank(@RequestBody QuestionBankUpdateRequest questionbankUpdateRequest) {
         if (questionbankUpdateRequest == null || questionbankUpdateRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -140,7 +143,7 @@ public class QuestionBankController {
      * @return
      */
     @GetMapping("/get/vo")
-    public BaseResponse<QuestionBankVO> getQuestionbankVOById(QuestionbankQueryRequest questionbankQueryRequest, HttpServletRequest request) {
+    public BaseResponse<QuestionBankVO> getQuestionbankVOById(QuestionBankQueryRequest questionbankQueryRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(questionbankQueryRequest == null, ErrorCode.PARAMS_ERROR);
         Long id = questionbankQueryRequest.getId();
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
@@ -188,7 +191,7 @@ public class QuestionBankController {
      */
     @PostMapping("/list/page")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Page<QuestionBank>> listQuestionbankByPage(@RequestBody QuestionbankQueryRequest questionbankQueryRequest) {
+    public BaseResponse<Page<QuestionBank>> listQuestionbankByPage(@RequestBody QuestionBankQueryRequest questionbankQueryRequest) {
         long current = questionbankQueryRequest.getCurrent();
         long size = questionbankQueryRequest.getPageSize();
         // 查询数据库
@@ -205,7 +208,10 @@ public class QuestionBankController {
      * @return
      */
     @PostMapping("/list/page/vo")
-    public BaseResponse<Page<QuestionBankVO>> listQuestionbankVOByPage(@RequestBody QuestionbankQueryRequest questionbankQueryRequest,
+    @SentinelResource(value = "listQuestionBankVOByPage",
+            blockHandler = "handleBlockException",
+            fallback = "handleFallback")
+    public BaseResponse<Page<QuestionBankVO>> listQuestionbankVOByPage(@RequestBody QuestionBankQueryRequest questionbankQueryRequest,
                                                                        HttpServletRequest request) {
         long current = questionbankQueryRequest.getCurrent();
         long size = questionbankQueryRequest.getPageSize();
@@ -219,6 +225,29 @@ public class QuestionBankController {
     }
 
     /**
+     * listQuestionBankVOByPage 降级操作：直接返回本地数据
+     */
+    public BaseResponse<Page<QuestionBankVO>> handleFallback(@RequestBody QuestionBankQueryRequest questionBankQueryRequest,
+                                                             HttpServletRequest request, Throwable ex) {
+        // 可以返回本地数据或空数据
+        return ResultUtils.success(null);
+    }
+
+    /**
+     * listQuestionBankVOByPage 流控操作
+     * 限流：提示“系统压力过大，请耐心等待”
+     */
+    public BaseResponse<Page<QuestionBankVO>> handleBlockException(@RequestBody QuestionBankQueryRequest questionBankQueryRequest,
+                                                                   HttpServletRequest request, BlockException ex) {
+        //降级操作
+        if(ex instanceof DegradeException){
+            return handleFallback(questionBankQueryRequest, request, ex);
+        }
+        // 限流操作
+        return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "系统压力过大，请耐心等待");
+    }
+
+    /**
      * 分页获取当前登录用户创建的题库列表
      *
      * @param questionbankQueryRequest
@@ -226,7 +255,7 @@ public class QuestionBankController {
      * @return
      */
     @PostMapping("/my/list/page/vo")
-    public BaseResponse<Page<QuestionBankVO>> listMyQuestionbankVOByPage(@RequestBody QuestionbankQueryRequest questionbankQueryRequest,
+    public BaseResponse<Page<QuestionBankVO>> listMyQuestionbankVOByPage(@RequestBody QuestionBankQueryRequest questionbankQueryRequest,
                                                                          HttpServletRequest request) {
         ThrowUtils.throwIf(questionbankQueryRequest == null, ErrorCode.PARAMS_ERROR);
         // 补充查询条件，只查询当前登录用户的数据
@@ -252,7 +281,7 @@ public class QuestionBankController {
      */
     @PostMapping("/edit")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> editQuestionbank(@RequestBody QuestionbankEditRequest questionbankEditRequest, HttpServletRequest request) {
+    public BaseResponse<Boolean> editQuestionbank(@RequestBody QuestionBankEditRequest questionbankEditRequest, HttpServletRequest request) {
         if (questionbankEditRequest == null || questionbankEditRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }

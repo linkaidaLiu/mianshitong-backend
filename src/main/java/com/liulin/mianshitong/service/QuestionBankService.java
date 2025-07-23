@@ -3,7 +3,7 @@ package com.liulin.mianshitong.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.liulin.mianshitong.model.dto.questionbank.QuestionbankQueryRequest;
+import com.liulin.mianshitong.model.dto.questionbank.QuestionBankQueryRequest;
 import com.liulin.mianshitong.model.entity.QuestionBank;
 import com.liulin.mianshitong.model.vo.QuestionBankVO;
 
@@ -31,7 +31,7 @@ public interface QuestionBankService extends IService<QuestionBank> {
      * @param questionbankQueryRequest
      * @return
      */
-    QueryWrapper<QuestionBank> getQueryWrapper(QuestionbankQueryRequest questionbankQueryRequest);
+    QueryWrapper<QuestionBank> getQueryWrapper(QuestionBankQueryRequest questionbankQueryRequest);
     
     /**
      * 获取题库封装

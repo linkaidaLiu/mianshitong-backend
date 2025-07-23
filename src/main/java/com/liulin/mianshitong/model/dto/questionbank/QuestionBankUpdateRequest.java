@@ -3,7 +3,6 @@ package com.liulin.mianshitong.model.dto.questionbank;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * 更新题库请求
@@ -12,7 +11,7 @@ import java.util.List;
  * @from <a href="https://www.code-nav.cn"></a>
  */
 @Data
-public class QuestionbankUpdateRequest implements Serializable {
+public class QuestionBankUpdateRequest implements Serializable {
 
     /**
      * id

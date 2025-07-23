@@ -102,6 +102,18 @@
             <artifactId>cos_api</artifactId>
             <version>5.6.89</version>
         </dependency>
+        <!--  Sa-Token 权限认证，在线文档：https://sa-token.cc  -->
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-spring-boot-starter</artifactId>
+            <version>1.39.0</version>
+        </dependency>
+        <!--  Nacos 配置中心  -->
+        <dependency>
+            <groupId>com.alibaba.boot</groupId>
+            <artifactId>nacos-config-spring-boot-starter</artifactId>
+            <version>0.2.12</version>
+        </dependency>
         <!--  Sentinel  -->
         <!--  https://mvnrepository.com/artifact/com.alibaba.cloud/spring-cloud-starter-alibaba-sentinel  -->
         <dependency>

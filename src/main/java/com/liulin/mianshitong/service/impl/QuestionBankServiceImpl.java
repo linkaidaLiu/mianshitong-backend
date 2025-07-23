@@ -8,7 +8,7 @@ import com.liulin.mianshitong.common.ErrorCode;
 import com.liulin.mianshitong.constant.CommonConstant;
 import com.liulin.mianshitong.exception.ThrowUtils;
 import com.liulin.mianshitong.mapper.QuestionbankMapper;
-import com.liulin.mianshitong.model.dto.questionbank.QuestionbankQueryRequest;
+import com.liulin.mianshitong.model.dto.questionbank.QuestionBankQueryRequest;
 import com.liulin.mianshitong.model.entity.QuestionBank;
 import com.liulin.mianshitong.model.entity.User;
 import com.liulin.mianshitong.model.vo.QuestionBankVO;
@@ -71,7 +71,7 @@ public class QuestionBankServiceImpl extends ServiceImpl<QuestionbankMapper, Que
      * @return
      */
     @Override
-    public QueryWrapper<QuestionBank> getQueryWrapper(QuestionbankQueryRequest questionbankQueryRequest) {
+    public QueryWrapper<QuestionBank> getQueryWrapper(QuestionBankQueryRequest questionbankQueryRequest) {
         QueryWrapper<QuestionBank> queryWrapper = new QueryWrapper<>();
         if (questionbankQueryRequest == null) {
             return queryWrapper;
