@@ -1,5 +1,6 @@
 package com.liulin.mianshitong.controller;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
 import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.csp.sentinel.slots.block.degrade.DegradeException;
@@ -62,7 +63,7 @@ public class QuestionBankController {
      * @return
      */
     @PostMapping("/add")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<Long> addQuestionbank(@RequestBody QuestionBankAddRequest questionbankAddRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(questionbankAddRequest == null, ErrorCode.PARAMS_ERROR);
         // todo 在此处将实体类和 DTO 进行转换
@@ -89,7 +90,7 @@ public class QuestionBankController {
      * @return
      */
     @PostMapping("/delete")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> deleteQuestionbank(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -116,7 +117,7 @@ public class QuestionBankController {
      * @return
      */
     @PostMapping("/update")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> updateQuestionbank(@RequestBody QuestionBankUpdateRequest questionbankUpdateRequest) {
         if (questionbankUpdateRequest == null || questionbankUpdateRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -190,7 +191,7 @@ public class QuestionBankController {
      * @return
      */
     @PostMapping("/list/page")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<QuestionBank>> listQuestionbankByPage(@RequestBody QuestionBankQueryRequest questionbankQueryRequest) {
         long current = questionbankQueryRequest.getCurrent();
         long size = questionbankQueryRequest.getPageSize();
@@ -280,7 +281,7 @@ public class QuestionBankController {
      * @return
      */
     @PostMapping("/edit")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> editQuestionbank(@RequestBody QuestionBankEditRequest questionbankEditRequest, HttpServletRequest request) {
         if (questionbankEditRequest == null || questionbankEditRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);

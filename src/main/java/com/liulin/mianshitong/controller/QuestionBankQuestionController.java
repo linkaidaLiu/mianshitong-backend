@@ -1,5 +1,6 @@
 package com.liulin.mianshitong.controller;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -52,7 +53,7 @@ public class QuestionBankQuestionController {
      * @return
      */
     @PostMapping("/add")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<Long> addQuestionbankquestion(
             @RequestBody QuestionbankquestionAddRequest questionbankquestionAddRequest,
             HttpServletRequest request
@@ -127,7 +128,7 @@ public class QuestionBankQuestionController {
      * @return
      */
     @PostMapping("/update")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> updateQuestionbankquestion(@RequestBody QuestionbankquestionUpdateRequest questionbankquestionUpdateRequest) {
         if (questionbankquestionUpdateRequest == null || questionbankquestionUpdateRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -170,7 +171,7 @@ public class QuestionBankQuestionController {
      * @return
      */
     @PostMapping("/list/page")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<QuestionBankQuestion>> listQuestionbankquestionByPage(@RequestBody QuestionbankquestionQueryRequest questionbankquestionQueryRequest) {
         long current = questionbankquestionQueryRequest.getCurrent();
         long size = questionbankquestionQueryRequest.getPageSize();
@@ -234,7 +235,7 @@ public class QuestionBankQuestionController {
      * @return
      */
     @PostMapping("/add/batch")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> batchAddQuestionsToBank(
             @RequestBody QuestionbankquestionBatchAddRequest questionBankQuestionBatchAddRequest,
             HttpServletRequest request
@@ -256,7 +257,7 @@ public class QuestionBankQuestionController {
      * @return
      */
     @PostMapping("/remove/batch")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> batchAddQuestionsToBank(
             @RequestBody QuestionbankquestionBatchRemoveRequest questionbankquestionBatchRemoveRequest,
             HttpServletRequest request

@@ -1,5 +1,7 @@
 package com.liulin.mianshitong.controller;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
+import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.liulin.mianshitong.annotation.AuthCheck;
 import com.liulin.mianshitong.common.BaseResponse;
@@ -10,6 +12,7 @@ import com.liulin.mianshitong.config.WxOpenConfig;
 import com.liulin.mianshitong.constant.UserConstant;
 import com.liulin.mianshitong.exception.BusinessException;
 import com.liulin.mianshitong.exception.ThrowUtils;
+import com.liulin.mianshitong.manager.CounterManager;
 import com.liulin.mianshitong.model.dto.user.UserAddRequest;
 import com.liulin.mianshitong.model.dto.user.UserLoginRequest;
 import com.liulin.mianshitong.model.dto.user.UserQueryRequest;
@@ -24,6 +27,7 @@ import com.liulin.mianshitong.service.UserService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -60,6 +64,9 @@ public class UserController {
 
     @Resource
     private WxOpenConfig wxOpenConfig;
+
+    @Resource
+    private CounterManager counterManager;
 
     // region 登录相关
 
@@ -167,7 +174,7 @@ public class UserController {
      * @return
      */
     @PostMapping("/add")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<Long> addUser(@RequestBody UserAddRequest userAddRequest, HttpServletRequest request) {
         if (userAddRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -191,7 +198,7 @@ public class UserController {
      * @return
      */
     @PostMapping("/delete")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> deleteUser(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         if (deleteRequest == null || deleteRequest.getId() <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -208,7 +215,7 @@ public class UserController {
      * @return
      */
     @PostMapping("/update")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<Boolean> updateUser(@RequestBody UserUpdateRequest userUpdateRequest,
             HttpServletRequest request) {
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
@@ -229,7 +236,7 @@ public class UserController {
      * @return
      */
     @GetMapping("/get")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<User> getUserById(long id, HttpServletRequest request) {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -249,10 +256,48 @@ public class UserController {
     @GetMapping("/get/vo")
     public BaseResponse<UserVO> getUserVOById(long id, HttpServletRequest request) {
         BaseResponse<User> response = getUserById(id, request);
+        // 检测和处置爬虫（可以自行扩展为 - 登录后才能获取到答案）
+        User loginUser = userService.getLoginUserPermitNull(request);
+        if (loginUser != null) {
+            crawlerDetect(loginUser.getId());
+        }
+        // 友情提示，对于敏感的内容，可以再打印一些日志，记录用户访问的内容
+        crawlerDetect(loginUser.getId());
         User user = response.getData();
         return ResultUtils.success(userService.getUserVO(user));
     }
 
+    /**
+     * 检测爬虫
+     *
+     * @param loginUserId
+     */
+    private void crawlerDetect(long loginUserId) {
+        // 调用多少次时告警
+        final int WARN_COUNT = 10;
+        // 调用多少次时封号
+        final int BAN_COUNT = 20;
+        // 拼接访问 key
+        String key = String.format("user:access:%s", loginUserId);
+        // 统计一分钟内访问次数，180 秒过期
+        long count = counterManager.incrAndGetCounter(key, 1, TimeUnit.MINUTES, 180);
+        // 是否封号
+        if (count > BAN_COUNT) {
+            // 踢下线
+            StpUtil.kickout(loginUserId);
+            // 封号
+            User updateUser = new User();
+            updateUser.setId(loginUserId);
+            updateUser.setUserRole("ban");
+            userService.updateById(updateUser);
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "访问次数过多，已被封号");
+        }
+        // 是否告警
+        if (count == WARN_COUNT) {
+            // 可以改为向管理员发送邮件通知
+            throw new BusinessException(110, "警告：访问太频繁");
+        }
+    }
     /**
      * 分页获取用户列表（仅管理员）
      *
@@ -261,7 +306,7 @@ public class UserController {
      * @return
      */
     @PostMapping("/list/page")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<User>> listUserByPage(@RequestBody UserQueryRequest userQueryRequest,
             HttpServletRequest request) {
         long current = userQueryRequest.getCurrent();
