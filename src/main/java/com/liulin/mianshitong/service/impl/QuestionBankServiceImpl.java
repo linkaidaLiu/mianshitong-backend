@@ -44,14 +44,14 @@ public class QuestionBankServiceImpl extends ServiceImpl<QuestionbankMapper, Que
     /**
      * 校验数据
      *
-     * @param questionbank
+     * @param questionBank
      * @param add      对创建的数据进行校验
      */
     @Override
-    public void validQuestionbank(QuestionBank questionbank, boolean add) {
-        ThrowUtils.throwIf(questionbank == null, ErrorCode.PARAMS_ERROR);
+    public void validQuestionBank(QuestionBank questionBank, boolean add) {
+        ThrowUtils.throwIf(questionBank == null, ErrorCode.PARAMS_ERROR);
         // todo 从对象中取值
-        String title = questionbank.getTitle();
+        String title = questionBank.getTitle();
         // 创建数据时，参数不能为空
         if (add) {
             // todo 补充校验规则
@@ -67,40 +67,40 @@ public class QuestionBankServiceImpl extends ServiceImpl<QuestionbankMapper, Que
     /**
      * 获取查询条件
      *
-     * @param questionbankQueryRequest
+     * @param questionBankQueryRequest
      * @return
      */
     @Override
-    public QueryWrapper<QuestionBank> getQueryWrapper(QuestionBankQueryRequest questionbankQueryRequest) {
+    public QueryWrapper<QuestionBank> getQueryWrapper(QuestionBankQueryRequest questionBankQueryRequest) {
         QueryWrapper<QuestionBank> queryWrapper = new QueryWrapper<>();
-        if (questionbankQueryRequest == null) {
+        if (questionBankQueryRequest == null) {
             return queryWrapper;
         }
         // todo 从对象中取值
-        Long id = questionbankQueryRequest.getId();
-        Long notId = questionbankQueryRequest.getNotId();
-        String title = questionbankQueryRequest.getTitle();
-        String searchText = questionbankQueryRequest.getSearchText();
-        String sortField = questionbankQueryRequest.getSortField();
-        String sortOrder = questionbankQueryRequest.getSortOrder();
-        Long userId = questionbankQueryRequest.getUserId();
-        String description = questionbankQueryRequest.getDescription();
-        String picture = questionbankQueryRequest.getPicture();
+        Long id = questionBankQueryRequest.getId();
+        Long notId = questionBankQueryRequest.getNotId();
+        String title = questionBankQueryRequest.getTitle();
+        String searchText = questionBankQueryRequest.getSearchText();
+        String sortField = questionBankQueryRequest.getSortField();
+        String sortOrder = questionBankQueryRequest.getSortOrder();
+        Long userId = questionBankQueryRequest.getUserId();
+        String description = questionBankQueryRequest.getDescription();
+        String picture = questionBankQueryRequest.getPicture();
+
         // todo 补充需要的查询条件
         // 从多字段中搜索
         if (StringUtils.isNotBlank(searchText)) {
             // 需要拼接查询条件
-            queryWrapper.and(qw -> qw.like("title", searchText).or().like("content", searchText));
+            queryWrapper.and(qw -> qw.like("title", searchText).or().like("description", searchText));
         }
         // 模糊查询
         queryWrapper.like(StringUtils.isNotBlank(title), "title", title);
-        queryWrapper.like(StringUtils.isNotBlank(description), "content", description);
-        // JSON 数组查询
+        queryWrapper.like(StringUtils.isNotBlank(description), "description", description);
         // 精确查询
         queryWrapper.ne(ObjectUtils.isNotEmpty(notId), "id", notId);
         queryWrapper.eq(ObjectUtils.isNotEmpty(id), "id", id);
         queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);
-        queryWrapper.eq(ObjectUtils.isNotEmpty(picture), "questionId", picture);
+        queryWrapper.eq(ObjectUtils.isNotEmpty(picture), "picture", picture);
         // 排序规则
         queryWrapper.orderBy(SqlUtils.validSortField(sortField),
                 sortOrder.equals(CommonConstant.SORT_ORDER_ASC),
@@ -111,47 +111,47 @@ public class QuestionBankServiceImpl extends ServiceImpl<QuestionbankMapper, Que
     /**
      * 获取题库封装
      *
-     * @param questionbank
+     * @param questionBank
      * @param request
      * @return
      */
     @Override
-    public QuestionBankVO getQuestionbankVO(QuestionBank questionbank, HttpServletRequest request) {
+    public QuestionBankVO getQuestionBankVO(QuestionBank questionBank, HttpServletRequest request) {
         // 对象转封装类
-        QuestionBankVO questionbankVO = QuestionBankVO.objToVo(questionbank);
+        QuestionBankVO questionBankVO = QuestionBankVO.objToVo(questionBank);
 
         // todo 可以根据需要为封装对象补充值，不需要的内容可以删除
         // region 可选
         // 1. 关联查询用户信息
-        Long userId = questionbank.getUserId();
+        Long userId = questionBank.getUserId();
         User user = null;
         if (userId != null && userId > 0) {
             user = userService.getById(userId);
         }
         UserVO userVO = userService.getUserVO(user);
-        questionbankVO.setUser(userVO);
+        questionBankVO.setUser(userVO);
         // endregion
 
-        return questionbankVO;
+        return questionBankVO;
     }
 
     /**
      * 分页获取题库封装
      *
-     * @param questionbankPage
+     * @param questionBankPage
      * @param request
      * @return
      */
     @Override
-    public Page<QuestionBankVO> getQuestionbankVOPage(Page<QuestionBank> questionbankPage, HttpServletRequest request) {
-        List<QuestionBank> questionBankList = questionbankPage.getRecords();
-        Page<QuestionBankVO> questionbankVOPage = new Page<>(questionbankPage.getCurrent(), questionbankPage.getSize(), questionbankPage.getTotal());
+    public Page<QuestionBankVO> getQuestionBankVOPage(Page<QuestionBank> questionBankPage, HttpServletRequest request) {
+        List<QuestionBank> questionBankList = questionBankPage.getRecords();
+        Page<QuestionBankVO> questionBankVOPage = new Page<>(questionBankPage.getCurrent(), questionBankPage.getSize(), questionBankPage.getTotal());
         if (CollUtil.isEmpty(questionBankList)) {
-            return questionbankVOPage;
+            return questionBankVOPage;
         }
         // 对象列表 => 封装对象列表
-        List<QuestionBankVO> questionBankVOList = questionBankList.stream().map(questionbank -> {
-            return QuestionBankVO.objToVo(questionbank);
+        List<QuestionBankVO> questionBankVOList = questionBankList.stream().map(questionBank -> {
+            return QuestionBankVO.objToVo(questionBank);
         }).collect(Collectors.toList());
 
         // todo 可以根据需要为封装对象补充值，不需要的内容可以删除
@@ -171,8 +171,8 @@ public class QuestionBankServiceImpl extends ServiceImpl<QuestionbankMapper, Que
         });
         // endregion
 
-        questionbankVOPage.setRecords(questionBankVOList);
-        return questionbankVOPage;
+        questionBankVOPage.setRecords(questionBankVOList);
+        return questionBankVOPage;
     }
 
 }

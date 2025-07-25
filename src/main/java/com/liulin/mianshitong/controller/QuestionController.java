@@ -1,6 +1,8 @@
 package com.liulin.mianshitong.controller;
 
 import cn.dev33.satoken.annotation.SaCheckRole;
+import cn.dev33.satoken.stp.StpUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.csp.sentinel.Entry;
 import com.alibaba.csp.sentinel.EntryType;
@@ -17,6 +19,7 @@ import com.liulin.mianshitong.common.ResultUtils;
 import com.liulin.mianshitong.constant.UserConstant;
 import com.liulin.mianshitong.exception.BusinessException;
 import com.liulin.mianshitong.exception.ThrowUtils;
+import com.liulin.mianshitong.manager.CounterManager;
 import com.liulin.mianshitong.model.dto.question.*;
 import com.liulin.mianshitong.model.entity.Question;
 import com.liulin.mianshitong.model.entity.User;
@@ -32,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 题目接口
@@ -47,8 +51,6 @@ public class QuestionController {
     @Resource
     private QuestionService questionService;
 
-    @Resource
-    private QuestionBankQuestionService questionbankquestionService;
     @Resource
     private UserService userService;
 
@@ -68,6 +70,10 @@ public class QuestionController {
         // todo 在此处将实体类和 DTO 进行转换
         Question question = new Question();
         BeanUtils.copyProperties(questionAddRequest, question);
+        List<String> tags = questionAddRequest.getTags();
+        if (tags != null) {
+            question.setTags(JSONUtil.toJsonStr(tags));
+        }
         // 数据校验
         questionService.validQuestion(question, true);
         // todo 填充默认值
@@ -124,6 +130,10 @@ public class QuestionController {
         // todo 在此处将实体类和 DTO 进行转换
         Question question = new Question();
         BeanUtils.copyProperties(questionUpdateRequest, question);
+        List<String> tags = questionUpdateRequest.getTags();
+        if (tags != null) {
+            question.setTags(JSONUtil.toJsonStr(tags));
+        }
         // 数据校验
         questionService.validQuestion(question, false);
         // 判断是否存在
@@ -145,11 +155,53 @@ public class QuestionController {
     @GetMapping("/get/vo")
     public BaseResponse<QuestionVO> getQuestionVOById(long id, HttpServletRequest request) {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
+        // 检测和处置爬虫（可以自行扩展为 - 登录后才能获取到答案）
+        User loginUser = userService.getLoginUserPermitNull(request);
+        if (loginUser != null) {
+            crawlerDetect(loginUser.getId());
+        }
+        // 友情提示，对于敏感的内容，可以再打印一些日志，记录用户访问的内容
         // 查询数据库
         Question question = questionService.getById(id);
         ThrowUtils.throwIf(question == null, ErrorCode.NOT_FOUND_ERROR);
         // 获取封装类
         return ResultUtils.success(questionService.getQuestionVO(question, request));
+    }
+
+    // 仅是为了方便，才把这段代码写到这里
+    @Resource
+    private CounterManager counterManager;
+
+    /**
+     * 检测爬虫
+     *
+     * @param loginUserId
+     */
+    private void crawlerDetect(long loginUserId) {
+        // 调用多少次时告警
+        final int WARN_COUNT = 10;
+        // 调用多少次时封号
+        final int BAN_COUNT = 20;
+        // 拼接访问 key
+        String key = String.format("user:access:%s", loginUserId);
+        // 统计一分钟内访问次数，180 秒过期
+        long count = counterManager.incrAndGetCounter(key, 1, TimeUnit.MINUTES, 180);
+        // 是否封号
+        if (count > BAN_COUNT) {
+            // 踢下线
+            StpUtil.kickout(loginUserId);
+            // 封号
+            User updateUser = new User();
+            updateUser.setId(loginUserId);
+            updateUser.setUserRole("ban");
+            userService.updateById(updateUser);
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "访问次数过多，已被封号");
+        }
+        // 是否告警
+        if (count == WARN_COUNT) {
+            // 可以改为向管理员发送邮件通知
+            throw new BusinessException(110, "警告：访问太频繁");
+        }
     }
 
     /**
@@ -162,6 +214,7 @@ public class QuestionController {
     @SaCheckRole(UserConstant.ADMIN_ROLE)
     public BaseResponse<Page<Question>> listQuestionByPage(@RequestBody QuestionQueryRequest questionQueryRequest) {
         ThrowUtils.throwIf(questionQueryRequest == null, ErrorCode.PARAMS_ERROR);
+        // 查询数据库
         Page<Question> questionPage = questionService.listQuestionByPage(questionQueryRequest);
         return ResultUtils.success(questionPage);
     }
@@ -176,16 +229,16 @@ public class QuestionController {
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<QuestionVO>> listQuestionVOByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
                                                                HttpServletRequest request) {
-        long current = questionQueryRequest.getCurrent();
+        ThrowUtils.throwIf(questionQueryRequest == null, ErrorCode.PARAMS_ERROR);
         long size = questionQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
         // 查询数据库
-        Page<Question> questionPage = questionService.page(new Page<>(current, size),
-                questionService.getQueryWrapper(questionQueryRequest));
+        Page<Question> questionPage = questionService.listQuestionByPage(questionQueryRequest);
         // 获取封装类
         return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
     }
+
     /**
      * 分页获取题目列表（封装类 - 限流版）
      *
@@ -237,6 +290,8 @@ public class QuestionController {
         // 可以返回本地数据或空数据
         return ResultUtils.success(null);
     }
+
+
     /**
      * 分页获取当前登录用户创建的题目列表
      *
@@ -299,24 +354,52 @@ public class QuestionController {
         return ResultUtils.success(true);
     }
 
+    // endregion
+
     @PostMapping("/search/page/vo")
     public BaseResponse<Page<QuestionVO>> searchQuestionVOByPage(@RequestBody QuestionQueryRequest questionQueryRequest,
                                                                  HttpServletRequest request) {
         long size = questionQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 200, ErrorCode.PARAMS_ERROR);
-        Page<Question> questionPage = questionService.searchFromEs(questionQueryRequest);
+        // todo 取消注释开启 ES（须先配置 ES）
+        // 查询 ES
+        // Page<Question> questionPage = questionService.searchFromEs(questionQueryRequest);
+        // 查询数据库（作为没有 ES 的降级方案）
+        Page<Question> questionPage = questionService.listQuestionByPage(questionQueryRequest);
         return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
     }
 
     @PostMapping("/delete/batch")
     @SaCheckRole(UserConstant.ADMIN_ROLE)
-    public BaseResponse<Boolean> batchDeleteQuestions(@RequestBody QuestionBatchDeleteRequest questionBatchDeleteRequest,
-                                                      HttpServletRequest request) {
+    public BaseResponse<Boolean> batchDeleteQuestions(@RequestBody QuestionBatchDeleteRequest questionBatchDeleteRequest) {
         ThrowUtils.throwIf(questionBatchDeleteRequest == null, ErrorCode.PARAMS_ERROR);
         questionService.batchDeleteQuestions(questionBatchDeleteRequest.getQuestionIdList());
         return ResultUtils.success(true);
     }
+
+//    /**
+//     * AI 生成题目（仅管理员可用）
+//     *
+//     * @param questionAIGenerateRequest 请求参数
+//     * @param request HTTP 请求
+//     * @return 是否生成成功
+//     */
+//    @PostMapping("/ai/generate/question")
+//    @SaCheckRole(UserConstant.ADMIN_ROLE)
+//    public BaseResponse<Boolean> aiGenerateQuestions(@RequestBody QuestionAIGenerateRequest questionAIGenerateRequest, HttpServletRequest request) {
+//        String questionType = questionAIGenerateRequest.getQuestionType();
+//        int number = questionAIGenerateRequest.getNumber();
+//        // 校验参数
+//        ThrowUtils.throwIf(StrUtil.isBlank(questionType), ErrorCode.PARAMS_ERROR, "题目类型不能为空");
+//        ThrowUtils.throwIf(number <= 0, ErrorCode.PARAMS_ERROR, "题目数量必须大于 0");
+//        // 获取当前登录用户
+//        User loginUser = userService.getLoginUser(request);
+//        // 调用 AI 生成题目服务
+//        questionService.aiGenerateQuestions(questionType, number, loginUser);
+//        // 返回结果
+//        return ResultUtils.success(true);
+//    }
 
     // endregion
 }
