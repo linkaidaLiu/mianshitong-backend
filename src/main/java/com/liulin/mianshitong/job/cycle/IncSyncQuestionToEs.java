@@ -4,11 +4,9 @@ import cn.hutool.core.collection.CollUtil;
 import com.liulin.mianshitong.esdao.QuestionEsDao;
 import com.liulin.mianshitong.mapper.QuestionMapper;
 import com.liulin.mianshitong.model.dto.question.QuestionEsDTO;
-import com.liulin.mianshitong.model.entity.Post;
 import com.liulin.mianshitong.model.entity.Question;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.Date;

@@ -1,6 +1,5 @@
 package com.liulin.mianshitong.mapper;
 
-import com.liulin.mianshitong.model.entity.Post;
 import com.liulin.mianshitong.model.entity.Question;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Select;
